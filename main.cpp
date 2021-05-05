@@ -72,15 +72,17 @@ void somaMatrizes(double **&S, double **&A, double **&B);
 
 void escalar_x_matriz(double escalar, double **&A);
 
-void Matriz_x_vetor(double * vR, double ** A, double * v);
+void Matriz_x_vetor(double *vR, double **A, double *v);
 
-void CalculaF(int col, double * F, double ** w, double * wAux);
+void CalculaF(int col, double *F, double **w, double *wAux);
 
-void CondicaoDeDirichlet(int n, double ** DF, double * F, double * w1, FPtr DirPtr, FPtr EsqPtr);
+void CondicaoDeDirichlet(int n, double **DF, double *F, double *w1, FPtr DirPtr, FPtr EsqPtr);
 
-void copiaVetorToColMatriz(int col, double * v, double ** A);
+void copiaVetorToColMatriz(int col, double *v, double **A);
 
-void ZeraMatriz(double ** A);
+void ZeraMatriz(double **A);
+
+void Jacobi(double **DF, double *F, double *S1, double *S2) ;
 
 int main() {
 
@@ -159,6 +161,8 @@ int main() {
             }
 
         }
+        Jacobi(DF,  F, S1, S2);
+        w1_menos_S2(w1, S2);
         //w(:,n+1)=w1
         copiaVetorToColMatriz(n + 1, w1, w);
         if (debug) {
@@ -168,6 +172,25 @@ int main() {
 
     }
     return 0;
+}
+
+void Ajusta_w1(doub)
+void Jacobi(double **DF, double *F, double *S1, double *S2) {
+    int itMax = 50;
+    double s;
+    for (int n = 1; itMax; n++) {
+        for (int i = 0; i <=M ; ++i) {
+            s=0.0;
+            for (int j = 0; j < i; ++j)
+                s=s+DF[i][j]*S1[j];
+            for (int j = i+1; j <=M ; ++j)
+                s=s+DF[i][j]*S1[j];
+
+            S2[i] = (F[i]-s)/DF[i][i];
+        }
+        for (int k=0;k<=M;k++)
+            S1[k] = S2[k];
+    }
 }
 
 void inicializa(double **w, FPtr Uptr) {
@@ -257,7 +280,7 @@ void copiaColMatrizToVetor(int col, int linIni, int linFim, double **&MOrig, dou
         vDest[i] = MOrig[i][col];
 }
 
-void copiaVetorToColMatriz(int col, double * v, double ** A) {
+void copiaVetorToColMatriz(int col, double *v, double **A) {
     for (int i = 0; i <= M; i++)
         A[i][col] = v[i];
 }
@@ -326,10 +349,10 @@ void CondicaoDeDirichlet(int n, double **DF, double *F, double *w1, FPtr DirPtr,
     F[M] = w1[M] - DirPtr(x1, n * k);
 }
 
-void ZeraMatriz(double ** A){
-    for (int i = 0; i <=M ; ++i) {
-        for (int j = 0; j <=M ; ++j) {
-            A[i][j]=0.0;
+void ZeraMatriz(double **A) {
+    for (int i = 0; i <= M; ++i) {
+        for (int j = 0; j <= M; ++j) {
+            A[i][j] = 0.0;
 
         }
 
