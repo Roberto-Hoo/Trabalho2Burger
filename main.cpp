@@ -22,14 +22,15 @@ double x1 = 1.0;
 double t0 = 0.0;
 double t1 = 1.0;
 
-int M = 10;
-int N = 2;
+int M = 50;
+int N = 25;
+const int itMax = 80;
 double h;
 double k;
 double sigma;
 FPtr Uptr, EsqPtr, DirPtr;
 
-bool debug = true;
+bool imprime = false; //true;
 double *w1 = nullptr;
 double *wAux = nullptr;
 double *F = nullptr;
@@ -46,7 +47,7 @@ double EsqFuncaoInicial(double x, double t);
 
 double U(double x, double t);
 
-void imprime(char *nome, double x, double t, FPtr Uptr);
+void imprimeFuncao(char *nome, double x, double t, FPtr Uptr);
 
 void NewMatriz(int nLin, int nCol, double **&M, double m);
 
@@ -86,6 +87,9 @@ void Jacobi(double **DF, double *F, double *S1, double *S2);
 
 void w1_igual_w1_menos_S1(double *w1, double *S1);
 
+void imprimeMatriz2(int lin, int col, double **A);
+void imprimeMatriz3(int col, double **A);
+
 int main() {
 
     if (M > 1) {
@@ -98,14 +102,12 @@ int main() {
         N = (t1 - t0) / k;
     }
 
-
     sigma = v * k / (h * h);
-
     Uptr = &U;
     EsqPtr = &EsqFuncaoInicial;
     DirPtr = &DirFuncaoInicial;
-    if (debug) {
-        imprime("Funcao U(x=0.5; t=1) =", 0.5, 1, Uptr);
+    if (imprime) {
+        imprimeFuncao("Funcao U(x=0.5; t=1) =", 0.5, 1, Uptr);
     }
 
     NewMatriz(M + 1, M + 1, DF, 0);
@@ -119,7 +121,7 @@ int main() {
     NewVetor(M + 1, wAux, 0);
 
 
-    if (debug) {
+    if (imprime) {
         imprimeMatriz("Matriz DF =", M + 1, M + 1, DF);
         imprimeMatriz("Matriz DF1 =", M + 1, M + 1, DF1);
         imprimeMatriz("Matriz DF2 =", M + 1, M + 1, DF2);
@@ -131,11 +133,12 @@ int main() {
     inicializa(w, Uptr);
     copiaColMatrizToVetor(0, 0, M, w, w1);
 
-    for (int n = 0; n < N; n++) {
-        for (int it = 1; it <= 3; ++it) {
+    for (int n = 0; n < N; n++) { // N  passos no tempo
+
+        for (int it = 1; it <= 3; ++it) { // iterações de Newton
             ZeraMatriz(DF1);
             ZeraMatriz(DF2);
-            if (debug) {
+            if (imprime) {
                 imprimeMatriz("Matriz w =", M + 1, N + 1, w);
                 imprimeVetor("Transposta do vetor w1 =", M + 1, w1);
             }
@@ -144,7 +147,7 @@ int main() {
             CalculaDF2(DF2, w1);
             somaMatrizes(DF, DF1, DF2);
 
-            if (debug) {
+            if (imprime) {
                 imprimeMatriz("Matriz DF1 =", M + 1, M + 1, DF1);
                 imprimeMatriz("Matriz DF2 =", M + 1, M + 1, DF2);
                 imprimeMatriz("Matriz DF =", M + 1, M + 1, DF);
@@ -154,28 +157,42 @@ int main() {
             somaMatrizes(DF1, DF1, DF2);
             Matriz_x_vetor(wAux, DF1, w1);
             CalculaF(n, F, w, wAux);
+            //imprimeMatriz("Matriz antes de Dirichelet DF =", M + 1, M + 1, DF);
             CondicaoDeDirichlet(n, DF, F, w1, DirPtr, EsqPtr);
 
-            if (debug) {
+            if (imprime) {
                 imprimeMatriz("Matriz DF2 =", M + 1, M + 1, DF2);
                 imprimeMatriz("Matriz DF1 =", M + 1, M + 1, DF1);
                 imprimeVetor("Transposta do vetor F =", M + 1, F);
             }
-
+            //imprimeMatriz("Matriz Antes do Jacobi DF =", M + 1, M + 1, DF);
             Jacobi(DF, F, S1, S2);
-            w1_igual_w1_menos_S1(w1, S1);
+            imprimeVetor("Transposta do vetor S2 =", M + 1, S2);
+            w1_igual_w1_menos_S1(w1, S2);
+            //imprimeVetor("Transposta do vetor w1 =", M + 1, w1);
 
         } // Fim da iteração( Método de Newton)
 
         //w1_menos_S2(w1, S2);
         //w(:,n+1)=w1
         copiaVetorToColMatriz(n + 1, w1, w);
-        if (debug) {
-            imprimeMatriz("Matriz w =", M + 1, N + 1, w);
-        }
 
-    }
+
+    }// Fim dos passos N
+    //if (imprime) {
+    //imprimeMatriz("Matriz w =", M + 1, N + 1, w);
+    imprimeMatriz3(N, w);
+    //}
     return 0;
+} // Fim main
+
+void imprimeMatriz3(int col, double **A) {
+    for (int i = 0; i <= M; i++)
+        printf("\n%12.10f", A[i][col]);
+}
+
+void imprimeMatriz2(int lin, int col, double **A) {
+    printf("%7.4f", A[lin][col]);
 }
 
 void w1_igual_w1_menos_S1(double *w1, double *S1) {
@@ -184,17 +201,20 @@ void w1_igual_w1_menos_S1(double *w1, double *S1) {
 }
 
 void Jacobi(double **DF, double *F, double *S1, double *S2) {
-    int itMax = 50;
+
     double s;
-    for (int n = 1; itMax; n++) {
+    for (int n = 1; n <= itMax; n++) {
         for (int i = 0; i <= M; ++i) {
             s = 0.0;
-            for (int j = 0; j < i; ++j)
-                s = s + DF[i][j] * S1[j];
-            for (int j = i + 1; j <= M; ++j)
-                s = s + DF[i][j] * S1[j];
-
+            for (int j = 0; j <= M; j++) {
+                if (j != i)
+                    s = s + DF[i][j] * S1[j];
+            }
             S2[i] = (F[i] - s) / DF[i][i];
+            //if (imprime) {
+            //    printf("\nS2[%d] = %6.2f   F[%d] =  %6.2f   s= %6.2f  DF[%d][%d]  = %7.4f ", \
+            //i, S2[i], i, F[i], s, i, i, DF[i][i]);
+            //}
         }
         for (int k = 0; k <= M; k++)
             S1[k] = S2[k];
@@ -229,7 +249,7 @@ double U(double x, double t) {
            / (alfa + beta * cos(M_PI * x) * exp(-v * t * M_PI * M_PI));
 }
 
-void imprime(char *nome, double x, double t, FPtr Uptr) {
+void imprimeFuncao(char *nome, double x, double t, FPtr Uptr) {
 
     printf("\n  %s \n", nome);
     printf(" %10.6f ", Uptr(x, t));
@@ -264,7 +284,7 @@ void imprimeMatriz(char *nome, int nlin, int ncol, double **&A) {
     for (int i = 0; i < nlin; ++i) {
         // loop through columns of current row
         for (int j = 0; j < ncol; ++j)
-            printf(" %7.4f", A[i][j]);
+            printf(" %12.10f", A[i][j]);
         cout << endl; // start new line of output
     } // end outer for
 } // end function printArray
@@ -274,7 +294,7 @@ void imprimeVetor(char *nome, int ncol, double *&v) {
     printf("\n  %s \n", nome);
     // loop through columns of current row
     for (int j = 0; j < ncol; ++j)
-        printf(" %6.4f", v[j]);
+        printf(" %9.7f", v[j]);
     cout << endl; // start new line of output
 } // end function printArray
 
@@ -351,7 +371,7 @@ void CondicaoDeDirichlet(int n, double **DF, double *F, double *w1, FPtr DirPtr,
         DF[M][j] = 0.0;
     }
     DF[0][0] = 1.0;
-    DF[M][M] = 0.0;
+    DF[M][M] = 1.0;
 
     F[0] = w1[0] - EsqPtr(x0, n * k);
     F[M] = w1[M] - DirPtr(x1, n * k);
