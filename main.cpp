@@ -82,7 +82,9 @@ void copiaVetorToColMatriz(int col, double *v, double **A);
 
 void ZeraMatriz(double **A);
 
-void Jacobi(double **DF, double *F, double *S1, double *S2) ;
+void Jacobi(double **DF, double *F, double *S1, double *S2);
+
+void w1_igual_w1_menos_S1(double *w1, double *S1);
 
 int main() {
 
@@ -130,7 +132,7 @@ int main() {
     copiaColMatrizToVetor(0, 0, M, w, w1);
 
     for (int n = 0; n < N; n++) {
-        for (int it = 1; it <= 1; ++it) {
+        for (int it = 1; it <= 3; ++it) {
             ZeraMatriz(DF1);
             ZeraMatriz(DF2);
             if (debug) {
@@ -160,35 +162,41 @@ int main() {
                 imprimeVetor("Transposta do vetor F =", M + 1, F);
             }
 
-        }
-        Jacobi(DF,  F, S1, S2);
-        w1_menos_S2(w1, S2);
+            Jacobi(DF, F, S1, S2);
+            w1_igual_w1_menos_S1(w1, S1);
+
+        } // Fim da iteração( Método de Newton)
+
+        //w1_menos_S2(w1, S2);
         //w(:,n+1)=w1
         copiaVetorToColMatriz(n + 1, w1, w);
         if (debug) {
             imprimeMatriz("Matriz w =", M + 1, N + 1, w);
-
         }
 
     }
     return 0;
 }
 
-void Ajusta_w1(doub)
+void w1_igual_w1_menos_S1(double *w1, double *S1) {
+    for (int i = 0; i <= M; i++)
+        w1[i] = w1[i] - S1[i];
+}
+
 void Jacobi(double **DF, double *F, double *S1, double *S2) {
     int itMax = 50;
     double s;
     for (int n = 1; itMax; n++) {
-        for (int i = 0; i <=M ; ++i) {
-            s=0.0;
+        for (int i = 0; i <= M; ++i) {
+            s = 0.0;
             for (int j = 0; j < i; ++j)
-                s=s+DF[i][j]*S1[j];
-            for (int j = i+1; j <=M ; ++j)
-                s=s+DF[i][j]*S1[j];
+                s = s + DF[i][j] * S1[j];
+            for (int j = i + 1; j <= M; ++j)
+                s = s + DF[i][j] * S1[j];
 
-            S2[i] = (F[i]-s)/DF[i][i];
+            S2[i] = (F[i] - s) / DF[i][i];
         }
-        for (int k=0;k<=M;k++)
+        for (int k = 0; k <= M; k++)
             S1[k] = S2[k];
     }
 }
