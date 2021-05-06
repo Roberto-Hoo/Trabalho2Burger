@@ -8,6 +8,9 @@
 
 #include <iostream>
 #include <cmath>
+//#include <Windows.h>
+#include <unistd.h>
+
 
 using namespace std;
 
@@ -22,7 +25,7 @@ double x1 = 1.0;
 double t0 = 0.0;
 double t1 = 1.0;
 
-int M = 50;
+int M = 100;
 int N = 25;
 const int itMax = 80;
 double h;
@@ -53,10 +56,8 @@ void NewMatriz(int nLin, int nCol, double **&M, double m);
 
 void NewVetor(int nCol, double *&V, double v);
 
-//void printArray(char ,double a[][N])
 void imprimeMatriz(char *nome, int nlin, int ncol, double **&A);
 
-//void printArray(char ,double a[][N])
 void imprimeVetor(char *nome, int ncol, double *&v);
 
 void inicializa(double **w, FPtr Uptr);
@@ -88,9 +89,29 @@ void Jacobi(double **DF, double *F, double *S1, double *S2);
 void w1_igual_w1_menos_S1(double *w1, double *S1);
 
 void imprimeMatriz2(int lin, int col, double **A);
+
 void imprimeMatriz3(int col, double **A);
 
+void DeleteData(void);
+
+double Burg(int M, int N);
+
 int main() {
+
+    double R = U(0.5, 1);
+    double Aprox;
+    printf("    h          k        U(x=0.5;t=1)        w(0.5;1)         erro = U - w  ");
+    for (int P=1;P<65;P=P*2) {
+        Aprox = Burg(M, P * N);
+        printf("\n%\8.6f    %8.6f   %14.12f    %14.12f    %14.12f", h, k, R, Aprox, R - Aprox);
+    }
+
+
+
+    return 0;
+} // Fim main
+
+double Burg(int M, int N) {
 
     if (M > 1) {
         h = (x1 - x0) / M;
@@ -135,7 +156,7 @@ int main() {
 
     for (int n = 0; n < N; n++) { // N  passos no tempo
 
-        for (int it = 1; it <= 3; ++it) { // iterações de Newton
+        for (int it = 1; it <= 6; ++it) { // iterações de Newton
             ZeraMatriz(DF1);
             ZeraMatriz(DF2);
             if (imprime) {
@@ -167,7 +188,7 @@ int main() {
             }
             //imprimeMatriz("Matriz Antes do Jacobi DF =", M + 1, M + 1, DF);
             Jacobi(DF, F, S1, S2);
-            imprimeVetor("Transposta do vetor S2 =", M + 1, S2);
+            //imprimeVetor("Transposta do vetor S2 =", M + 1, S2);
             w1_igual_w1_menos_S1(w1, S2);
             //imprimeVetor("Transposta do vetor w1 =", M + 1, w1);
 
@@ -179,12 +200,28 @@ int main() {
 
 
     }// Fim dos passos N
-    //if (imprime) {
-    //imprimeMatriz("Matriz w =", M + 1, N + 1, w);
-    imprimeMatriz3(N, w);
-    //}
-    return 0;
-} // Fim main
+
+    double resultado = w[M / 2][N];
+    DeleteData();
+
+    return resultado;
+}
+
+
+void DeleteData() {
+
+    delete[] w1;
+    delete[] wAux;
+    delete[] F;
+    delete[] S1;
+    delete[] S2;
+    delete[] w;
+    delete[] DF;
+    delete[] DF1;
+    delete[] DF2;
+    //sleep(1);
+
+}
 
 void imprimeMatriz3(int col, double **A) {
     for (int i = 0; i <= M; i++)
@@ -255,8 +292,12 @@ void imprimeFuncao(char *nome, double x, double t, FPtr Uptr) {
     printf(" %10.6f ", Uptr(x, t));
 }
 
+/*
+ * Cria nova matriz M[nLin][nCol] e inicializa com valor m
+ * Entrada: nLin, nCol, **M, m
+ */
 void NewMatriz(int nLin, int nCol, double **&M, double m) {
-    if (M == nullptr) {
+    if (1){//M == nullptr) {
         M = new double *[nLin];
         for (int i = 0; i < nLin; i++)
             M[i] = new double[nCol];
@@ -269,7 +310,7 @@ void NewMatriz(int nLin, int nCol, double **&M, double m) {
 }
 
 void NewVetor(int nCol, double *&V, double v) {
-    if (V == nullptr) {
+    if (1){//V == nullptr) {
         V = new double[nCol];
         for (int i = 0; i < nCol; i++)
             V[i] = v;
