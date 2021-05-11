@@ -11,11 +11,11 @@
 //#include <Windows.h>
 #include <unistd.h>
 
-
 using namespace std;
 
 typedef double (*FPtr)(double, double);
 
+char caracter;
 double alfa = 5.0;
 double beta = 4.0;
 double v = 0.05;
@@ -101,13 +101,14 @@ int main() {
     double R = U(0.5, 1);
     double Aprox;
     printf("    h          k        U(x=0.5;t=1)        w(0.5;1)         erro = U - w  ");
-    for (int P=1;P<65;P=P*2) {
+    for (int P=1;P<5;P=P*2) {
         Aprox = Burg(M, P * N);
         printf("\n%\8.6f    %8.6f   %14.12f    %14.12f    %14.12f", h, k, R, Aprox, R - Aprox);
     }
 
 
-
+    cout << "\n\nTecle uma tecla e apos Enter para finalizar...\n";
+    cin >> caracter;
     return 0;
 } // Fim main
 
